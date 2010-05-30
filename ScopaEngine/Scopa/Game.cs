@@ -53,10 +53,6 @@ namespace NIESoftware.Scopa {
 		public bool IsThrowable { get; set; }
 		public List<List<Card>> PossibleTricks { get; set; }
 
-		public static explicit operator Card (CardActions actions) {
-			return actions.Card;
-		}
-
 	}
 
 	class ScopaGame {
@@ -141,7 +137,7 @@ namespace NIESoftware.Scopa {
 			get { return deck.Count; }
 		}
 
-		private void GetActions () {
+		public void PopulateActions () {
 			if (!Current.Equals (actions.Player)) {
 				actions.Player = Current;
 				actions.CardActions = new List<CardActions>();
@@ -280,7 +276,7 @@ namespace NIESoftware.Scopa {
 		/// </summary>
 		public GameAction AutoAction {
 			get {
-				GetActions();
+				PopulateActions();
 
 				if (table.Count == 0) {
 					return GameAction.Tira;

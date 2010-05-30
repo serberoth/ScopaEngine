@@ -216,9 +216,9 @@ namespace NIESoftware {
 		}
 		private Card GetSoloPossible(ScopaGame game, GameAction action) {
 			if (GameAction.Tira.Equals(action)) {
-				return (Card) game.Actions.ThrowableList[0];
+				return game.Actions.ThrowableList[0].Card;
 			} else if (GameAction.Prendi.Equals(action)) {
-				return (Card) game.Actions.TrickableList[0];
+                return game.Actions.TrickableList[0].Card;
 			}
 			return default(Card);
 		}

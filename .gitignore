@@ -2,3 +2,5 @@
 ScopaEngine/bin/Debug/*
 ScopaEngine/bin/Release/*
 ScopaEngine/obj/*
+_UpgradeReport_Files/*
+UpgradeLog.XML
