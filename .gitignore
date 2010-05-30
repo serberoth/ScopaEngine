@@ -1,0 +1,4 @@
+
+ScopaEngine/bin/Debug/*
+ScopaEngine/bin/Release/*
+ScopaEngine/obj/*
