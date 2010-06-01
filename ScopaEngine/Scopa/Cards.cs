@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -92,7 +93,7 @@ namespace NIESoftware.Scopa {
 
 	}
 
-	class Deck {
+	class Deck : IEnumerable<Card> {
 		public const int TOTAL_SIZE = 40; // Enum.GetValues (typeof (Suit)).Length * Enum.GetValues (typeof (Value)).Length;
 
 #if DEBUG
@@ -130,6 +131,10 @@ namespace NIESoftware.Scopa {
 			}
 		}
 
+        public Card this[int index] {
+            get { return cards[index]; }
+        }
+
 		public int Count {
 			get { return cards.Count; }
 		}
@@ -137,6 +142,13 @@ namespace NIESoftware.Scopa {
 		public bool IsExhausted {
 			get { return cards.Count == 0; }
 		}
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            return GetEnumerator();
+        }
+        public IEnumerator<Card> GetEnumerator() {
+            return cards.GetEnumerator();
+        }
 
 	}
 

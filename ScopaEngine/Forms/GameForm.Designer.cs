@@ -93,6 +93,7 @@ namespace NIESoftware.Forms {
             this.playerAName.Size = new System.Drawing.Size(179, 37);
             this.playerAName.TabIndex = 16;
             this.playerAName.Text = "mmmmmm";
+            this.playerAName.MouseHover += new System.EventHandler(this.playerName_MouseHover);
             // 
             // playerBName
             // 
@@ -103,6 +104,7 @@ namespace NIESoftware.Forms {
             this.playerBName.Size = new System.Drawing.Size(179, 37);
             this.playerBName.TabIndex = 17;
             this.playerBName.Text = "mmmmmm";
+            this.playerBName.MouseHover += new System.EventHandler(this.playerName_MouseHover);
             // 
             // playerATrickTracker
             // 

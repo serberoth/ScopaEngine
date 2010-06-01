@@ -15,6 +15,7 @@ namespace NIESoftware.Scopa {
         int DenariCount { get; }
         bool SetteBello { get; }
         int ScopaCount { get; }
+        List<Card> LastTrick { get; }
 
 #if DEBUG
         List<Card> CardsTaken { get; }
@@ -30,6 +31,8 @@ namespace NIESoftware.Scopa {
         List<Card> SelectTrick(Card card);
 
         void TakeTrick(List<Card> cards, bool scopa);
+        TrickTracker GetPossibleScores(List<Card> cards, bool scopa);
+
         void NewRound();
 
         int IndexOf(Card card);
@@ -80,6 +83,14 @@ namespace NIESoftware.Scopa {
         public int ScopaCount {
             get { return trickTracker.ScopaCount; }
         }
+        public List<Card> LastTrick {
+            get {
+                if (trickTracker.TrickStack.Count > 0) {
+                    return new List<Card>(trickTracker.TrickStack[trickTracker.TrickStack.Count - 1]);
+                }
+                return new List<Card>();
+            }
+        }
 
 #if DEBUG
         public List<Card> CardsTaken {
@@ -104,6 +115,10 @@ namespace NIESoftware.Scopa {
 
         public void TakeTrick(List<Card> cards, bool scopa) {
             trickTracker.TakeTrick(cards, scopa);
+        }
+
+        public TrickTracker GetPossibleScores(List<Card> cards, bool scopa) {
+            return trickTracker.GetPossibleScores(cards, scopa);
         }
 
         public void NewRound() {

@@ -37,6 +37,20 @@ namespace NIESoftware.Scopa {
 			scopaCount = 0;
 			trickStack = new List<List<Card>>();
 		}
+        private TrickTracker(TrickTracker parent) {
+            cardsTaken = new Dictionary<Suit, List<Card>>();
+            foreach (Suit suit in Enum.GetValues (typeof (Suit))) {
+                cardsTaken.Add (suit, new List<Card> (parent.cardsTaken[suit]));
+            }
+            cardCount = parent.CardCount;
+            primieraValue = parent.primieraValue;
+            setteBello = parent.setteBello;
+            scopaCount = parent.scopaCount;
+            trickStack = new List<List<Card>>();
+            foreach (List<Card> trick in parent.trickStack) {
+                trickStack.Add(new List<Card>(trick));
+            }
+        }
 
 		public List<Card> CardsTaken {
 			get {
@@ -89,6 +103,12 @@ namespace NIESoftware.Scopa {
 			cardCount += cards.Count;
 			trickStack.Add(new List<Card>(cards));
 		}
+
+        public TrickTracker GetPossibleScores(List<Card> cards, bool scopa) {
+            TrickTracker tracker = new TrickTracker();
+            tracker.TakeTrick(cards, scopa);
+            return tracker;
+        }
 
 		int CompareToPrimieraScore(Card a, Card b) {
 			return PrimieraScore[a.Value].CompareTo(PrimieraScore[b.Value]);

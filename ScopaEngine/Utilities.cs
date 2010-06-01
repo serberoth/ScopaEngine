@@ -61,11 +61,15 @@ namespace NIESoftware {
 			list[index1] = temp;
 		}
 
-        public static T MaximumElement<T>(IEnumerable<T> collection, Func<T, decimal> predicate) {
+        public static List<T> MaximumElements<T>(IEnumerable<T> collection, Func<T, decimal> predicate) {
             decimal result = collection.Max<T, decimal>(predicate);
             List<T> maxList = collection.ToList<T>().FindAll(delegate(T t) {
-                return result.Equals (predicate(t));
+                return result.Equals(predicate(t));
             });
+            return maxList;
+        }
+        public static T MaximumElement<T>(IEnumerable<T> collection, Func<T, decimal> predicate) {
+            List<T> maxList = MaximumElements<T>(collection, predicate);
             if (maxList.Count == 1) {
                 return maxList[0];
             }

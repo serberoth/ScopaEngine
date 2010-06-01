@@ -69,11 +69,13 @@
     <Compile Include="Random.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scopa\MinimaxSelector.cs" />
     <Compile Include="Scopa\ScopaActions.cs" />
     <Compile Include="Scopa\ScopaEvents.cs" />
     <Compile Include="Scopa\ScopaGame.cs" />
     <Compile Include="Scopa\AIScopaPlayer.cs" />
     <Compile Include="Scopa\ScopaPlayer.cs" />
+    <Compile Include="Scopa\WeightedSelectorAI.cs" />
     <Compile Include="Scopa\TrickTracker.cs" />
     <Compile Include="Combinatorics.cs" />
     <Compile Include="Scopa\UIScopaPlayer.cs" />

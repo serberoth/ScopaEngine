@@ -169,10 +169,14 @@ Scope:";
         private void ShowCardBackList(PictureBox[] pbs, List<Card> cardList) {
             int i;
             for (i = 0; i < cardList.Count && i < pbs.Length; ++i) {
+                pbs[i].Image = global::NIESoftware.Properties.Resources.CardBack;
+                toolTip.SetToolTip(pbs[i], "");
+                /*
                 if (pbs[i].Image == null || !(pbs[i].Image.Tag is Card) || (!cardList[i].Equals ((Card)pbs[i].Image.Tag))) {
                     pbs[i].Image = global::NIESoftware.Properties.Resources.CardBack;
                     toolTip.SetToolTip(pbs[i], "");
                 }
+                 */
             }
             if (i < pbs.Length) {
                 for (; i < pbs.Length; ++i) {
@@ -262,6 +266,19 @@ Scope:";
 				toolTip.SetToolTip(pb, value);
 			}
 		}
+
+        private void playerName_MouseHover(object sender, EventArgs e) {
+            IScopaPlayer player = null;
+            if (playerAName.Equals(sender)) {
+                player = computer;
+            } else if (playerBName.Equals(sender)) {
+                player = humanPlayer;
+            }
+            if (player != null) {
+                List<Card> trick = player.LastTrick;
+                toolTip.SetToolTip(sender as Control, "Last Trick: " + Card.ToString (trick));
+            }
+        }
 
 		private void table_Click(object sender, EventArgs e) {
 			PictureBox pb = sender as PictureBox;
