@@ -239,15 +239,13 @@ namespace NIESoftware {
 				}
 
 				foreach (IScopaPlayer player in game.Players) {
-					Console.Out.Write(player.Name + " ha presa(" + player.CardCount + "): [ ");
-                    /*
-					List<Card> cardsTaken = player.CardsTaken;
-					cardsTaken.Sort();
-					foreach (Card c in cardsTaken) {
-						Console.Out.Write(c + ", ");
-					}
-                     */
-					Console.Out.WriteLine("]");
+					Console.Out.Write(player.Name + " ha presa(" + player.CardCount + ")");
+#if DEBUG
+                    List<Card> cardsTaken = player.CardsTaken;
+                    cardsTaken.Sort();
+                    Console.Out.Write(": " + Card.ToString(cardsTaken));
+#endif
+                    Console.Out.WriteLine();
 					Console.Out.WriteLine("Primiera: " + player.PrimieraValue);
 					Console.Out.WriteLine("Denari: " + player.DenariCount);
 					Console.Out.WriteLine("Settebello: " + player.SetteBello);

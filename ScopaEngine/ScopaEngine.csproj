@@ -72,7 +72,6 @@
     <Compile Include="Scopa\ScopaActions.cs" />
     <Compile Include="Scopa\ScopaEvents.cs" />
     <Compile Include="Scopa\ScopaGame.cs" />
-    <Compile Include="Scopa\PlayerTracker.cs" />
     <Compile Include="Scopa\AIScopaPlayer.cs" />
     <Compile Include="Scopa\ScopaPlayer.cs" />
     <Compile Include="Scopa\TrickTracker.cs" />

@@ -16,6 +16,10 @@ namespace NIESoftware.Scopa {
         bool SetteBello { get; }
         int ScopaCount { get; }
 
+#if DEBUG
+        List<Card> CardsTaken { get; }
+#endif
+
         bool IsPly { get; }
 
         bool IsHolding(Card card);
@@ -76,6 +80,12 @@ namespace NIESoftware.Scopa {
         public int ScopaCount {
             get { return trickTracker.ScopaCount; }
         }
+
+#if DEBUG
+        public List<Card> CardsTaken {
+            get { return trickTracker.CardsTaken; }
+        }
+#endif
 
         public bool IsPly {
             get { return game.Current.Equals(this) && !game.IsRoundOver; }

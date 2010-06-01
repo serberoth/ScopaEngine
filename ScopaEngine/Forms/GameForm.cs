@@ -401,21 +401,23 @@ Scope:";
             }
         }
 
+#if DEBUG
         private void ShowCompleteRound_DebugMessage() {
 			StringBuilder builder = new StringBuilder();
-			foreach (PlayerTracker player in game.Players) {
-				builder.Append(player.Name).Append(" ha presa(").Append(player.TrickTracker.CardCount).Append("): ");
-				List<Card> cardsTaken = player.TrickTracker.CardsTaken;
+			foreach (IScopaPlayer player in game.Players) {
+				builder.Append(player.Name).Append(" ha presa(").Append(player.CardCount).Append("): ");
+				List<Card> cardsTaken = player.CardsTaken;
 				cardsTaken.Sort();
 				builder.Append(Card.ToString(cardsTaken)).Append(Environment.NewLine);
-				builder.Append("Primiera: " + player.TrickTracker.PrimieraValue).Append(Environment.NewLine);
-				builder.Append("Denari: " + player.TrickTracker.DenariCount).Append(Environment.NewLine);
-				builder.Append("Settebello: " + player.TrickTracker.SetteBello).Append(Environment.NewLine);
-				builder.Append("Scopa: " + player.TrickTracker.ScopaCount).Append(Environment.NewLine);
+				builder.Append("Primiera: " + player.PrimieraValue).Append(Environment.NewLine);
+				builder.Append("Denari: " + player.DenariCount).Append(Environment.NewLine);
+				builder.Append("Settebello: " + player.SetteBello).Append(Environment.NewLine);
+				builder.Append("Scopa: " + player.ScopaCount).Append(Environment.NewLine);
 				builder.Append(Environment.NewLine);
 			}
 			MessageBox.Show(builder.ToString());
         }
+#endif
 
 		#endregion // Game Methods
 
