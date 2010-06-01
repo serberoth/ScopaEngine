@@ -1,4 +1,6 @@
-﻿using System;
+﻿// #define CONSOLE
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +15,7 @@ namespace NIESoftware {
 		[STAThread]
 		static void Main(string[] args) {
 #if CONSOLE
-			// new ConsoleScopa().Run();
+			new ConsoleScopa().Run();
 #else
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);

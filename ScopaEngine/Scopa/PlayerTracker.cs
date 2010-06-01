@@ -6,14 +6,14 @@ using System.Diagnostics;
 
 namespace NIESoftware.Scopa {
 
-	class Player : IEnumerable<Card> {
+	class PlayerTracker : IEnumerable<Card> {
 		private string name;
 		private List<Card> hand;
 		private TrickTracker trickTracker;
 		private int roundScore;
 		private int points;
 
-		public Player(string playerName) {
+		public PlayerTracker(string playerName) {
 			name = playerName;
 			hand = new List<Card>();
 			trickTracker = new TrickTracker();

@@ -109,8 +109,12 @@ namespace NIESoftware.Scopa {
 				}
 			}
 		}
+        protected Deck(List<Card> cards) {
+            Debug.Assert(cards.Count == TOTAL_SIZE);
+            this.cards = new List<Card> (cards);
+        }
 
-		public void Shuffle() {
+		public virtual void Shuffle() {
 #if DEBUG
 			Utilities.Shuffle(cards, RANDOM);
 #else
@@ -135,5 +139,61 @@ namespace NIESoftware.Scopa {
 		}
 
 	}
+
+    class StackedDeck : Deck {
+
+        static readonly List<Card> STACK = new List<Card> {
+            new Card (Suit.Coppe, Value.Fante),     // Table 1
+            new Card (Suit.Coppe, Value.Fante),     // Player A
+            new Card (Suit.Coppe, Value.Fante),     // Player B
+            new Card (Suit.Coppe, Value.Fante),     // Table 2
+            new Card (Suit.Coppe, Value.Fante),     // Player A
+            new Card (Suit.Coppe, Value.Fante),     // Player B
+            new Card (Suit.Coppe, Value.Fante),     // Table 3
+            new Card (Suit.Coppe, Value.Fante),     // Player A
+            new Card (Suit.Coppe, Value.Fante),     // Player B
+            new Card (Suit.Coppe, Value.Fante),     // Table 4
+
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+        };
+
+        public StackedDeck() : base(STACK) {
+        }
+
+        public override void Shuffle () {
+        }
+
+    }
 
 }

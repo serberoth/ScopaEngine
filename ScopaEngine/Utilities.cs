@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NIESoftware {
 
@@ -59,6 +60,17 @@ namespace NIESoftware {
 			list[index0] = list[index1];
 			list[index1] = temp;
 		}
+
+        public static T MaximumElement<T>(IEnumerable<T> collection, Func<T, decimal> predicate) {
+            decimal result = collection.Max<T, decimal>(predicate);
+            List<T> maxList = collection.ToList<T>().FindAll(delegate(T t) {
+                return result.Equals (predicate(t));
+            });
+            if (maxList.Count == 1) {
+                return maxList[0];
+            }
+            return default(T);
+        }
 
 	}
 

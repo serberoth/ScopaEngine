@@ -1,70 +1,22 @@
-﻿using System;
+﻿// #define USE_STACKED
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 
 namespace NIESoftware.Scopa {
 
-	enum GameAction : int {
-		Nessuna = -1,
-		Concede = 0,
-		Tira = 1,
-		Prendi = 2,
-	}
-
-	struct PlayerActions {
-
-		public Player Player { get; set; }
-		public bool CanThrow { get; set; }
-		public bool CanTrick { get; set; }
-		public List<CardActions> CardActions { get; set; }
-
-		public CardActions this[Card card] {
-			get { return CardActions.Find(a => a.Card.Equals(card)); }
-		}
-
-		public int ThrowableCount {
-			get { return CardActions.Count<CardActions>(a => a.IsThrowable); }
-		}
-		public int TrickableCount {
-			get { return CardActions.Count<CardActions>(a => !a.IsThrowable); }
-		}
-
-		public List<CardActions> ThrowableList {
-			get {
-				return CardActions.FindAll(delegate(CardActions actions) {
-					return actions.IsThrowable;
-				});
-			}
-		}
-		public List<CardActions> TrickableList {
-			get {
-				return CardActions.FindAll(delegate(CardActions actions) {
-					return !actions.IsThrowable;
-				});
-			}
-		}
-
-	}
-
-	struct CardActions {
-
-		public Card Card { get; set; }
-		public bool IsThrowable { get; set; }
-		public List<List<Card>> PossibleTricks { get; set; }
-
-	}
-
 	class ScopaGame {
 		private const int DEFAULT_WINNING_SCORE = 11;
 
 		private int winningScore;
-		private List<Player> players;
+        private List<IScopaPlayer> players;
 		private List<Card> table;
 		private Deck deck;
 		private int currentDealer;
 		private int currentPlayer;
-		private Player lastTrick;
+		private IScopaPlayer lastTrick;
 		private PlayerActions actions;
 
 		/// <summary>
@@ -77,16 +29,18 @@ namespace NIESoftware.Scopa {
 		/// <param name="points">The number of points required to win the game.</param>
 		public ScopaGame(int points) {
 			winningScore = points;
-			players = new List<Player>();
+            players = new List<IScopaPlayer>();
 			table = new List<Card>();
-			deck = new Deck();
+			deck = NewDeck;
 			currentDealer = 0;
 			currentPlayer = currentDealer + 1;
 			lastTrick = null;
 			actions = new PlayerActions();
 		}
 
-		/// <summary>
+        #region Field Accessors
+
+        /// <summary>
 		/// Get the required winning score that will complete this game.
 		/// </summary>
 		public int WinningScore {
@@ -96,7 +50,7 @@ namespace NIESoftware.Scopa {
 		/// <summary>
 		/// Get the list of players that are currently in this game.
 		/// </summary>
-		public List<Player> Players {
+		public List<IScopaPlayer> Players {
 			get { return players; }
 		}
 
@@ -110,21 +64,21 @@ namespace NIESoftware.Scopa {
 		/// <summary>
 		/// Get the current Player who is the dealer.
 		/// </summary>
-		public Player Dealer {
+		public IScopaPlayer Dealer {
 			get { return players[currentDealer]; }
 		}
 		
 		/// <summary>
 		/// Get the current Player that must make a play.
 		/// </summary>
-		public Player Current {
+		public IScopaPlayer Current {
 			get { return players[currentPlayer]; }
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Get the last Player to successfully take a trick.
 		/// </summary>
-		public Player LastTrick {
+		public IScopaPlayer LastTrick {
 			get { return lastTrick; }
 			set { lastTrick = value; }
 		}
@@ -137,58 +91,84 @@ namespace NIESoftware.Scopa {
 			get { return deck.Count; }
 		}
 
-		public void PopulateActions () {
-			if (!Current.Equals (actions.Player)) {
-				actions.Player = Current;
-				actions.CardActions = new List<CardActions>();
-				foreach (Card c in Current) {
-					CardActions cardActions = new CardActions();
-					cardActions.Card = c;
-					cardActions.IsThrowable = ValidateThrow(c);
-					cardActions.PossibleTricks = new List<List<Card>>();
-					if (!cardActions.IsThrowable) {
-						List<List<Card>> possibles = ScopaGame.EnumerateAll(table, c);
-						foreach (List<Card> possible in possibles) {
-							if (ValidateTrick(c, possible)) {
-								cardActions.PossibleTricks.Add(possible);
-							}
-						}
-					}
-					actions.CardActions.Add(cardActions);
-				}
-				actions.CanThrow = actions.CardActions.Any<CardActions>(a => a.IsThrowable);
-				actions.CanTrick = actions.CardActions.Any<CardActions>(a => !a.IsThrowable);
-			}
-		}
+        #endregion // FieldAccessors
 
-		/// <summary>
+        #region Status Accessors
+
+        /// <summary>
 		/// Determine if the deck is exhausted
 		/// </summary>
 		public bool IsDeckExhausted {
 			get { return deck.IsExhausted; }
 		}
 
-		/// <summary>
-		/// Add all of the players in the list to the current game if it is not in progress.
-		/// </summary>
-		/// <param name="names">The list of player names to add to the game</param>
-		public void AddPlayers(List<string> names) {
-			Debug.Assert(!IsInProgress);
-			foreach (string name in names) {
-				players.Add(new Player(name));
-			}
-		}
+        /// <summary>
+        /// Determine if the game is in progress.  This means that hands have been dealt from the
+        /// deck and or points have been scored.
+        /// </summary>
+        public bool IsInProgress {
+            get { return players.Any<IScopaPlayer>(a => a.Points > 0) && deck.Count < Deck.TOTAL_SIZE; }
+        }
+
+        /// <summary>
+        /// Determine if the current hand is over.  This means that no players hold cards in their
+        /// hands.
+        /// </summary>
+        public bool IsHandOver {
+            get { return !players.Any<IScopaPlayer> (a => a.Hand.Count > 0); }
+        }
+
+        /// <summary>
+        /// Determine if the current round is completed. This means the deck is exhausted and all
+        /// players hold no cards in their hands.
+        /// </summary>
+        public bool IsRoundOver {
+            get { return deck.IsExhausted && IsHandOver; }
+        }
+
+        /// <summary>
+        /// Determine if the current game is over (i.e. a player has obtained a winning score and
+        /// has more points than every other player).
+        /// </summary>
+        public bool IsGameOver {
+            get {
+                IScopaPlayer leader = Utilities.MaximumElement(players, a => a.Points);
+                return leader != null && leader.Points >= winningScore;
+            }
+        }
+
+        #endregion // Status Accessors
+
+        #region Utility Methods
+
+        /// <summary>
+        /// Add the provided player instance to the game if it is not currently in progress.
+        /// </summary>
+        /// <param name="player"></param>
+        public void AddPlayer(IScopaPlayer player) {
+            Debug.Assert(player != null && !IsInProgress);
+            players.Add(player);
+        }
+        /// <summary>
+        /// Add all of the players in the list to the current game if it is not in progress.
+        /// </summary>
+        /// <param name="names">The list of player names to add to the game</param>
+        public void AddPlayers(List<IScopaPlayer> players) {
+            Debug.Assert(players != null && !IsInProgress);
+            this.players.AddRange(players);
+        }
+
 
 		/// <summary>
 		/// Begin a new game.  This shuffles the deck and determines a random player to
 		/// deal the cards.
 		/// </summary>
 		public void BeginGame () {
-			deck = new Deck();
+			deck = NewDeck;
 			for (int i = 0; i < 7; ++i) {
 				deck.Shuffle();
 			}
-			currentDealer = (int) Random.Default.Ranged(players.Count);
+            currentDealer = (int) Random.Default.Ranged(players.Count);
 			currentPlayer = (currentDealer + 1) % players.Count;
 			actions = new PlayerActions();
 		}
@@ -198,10 +178,10 @@ namespace NIESoftware.Scopa {
 		/// and changes the dealer to the next player in line for dealing.
 		/// </summary>
 		public void NewRound() {
-			foreach (Player player in players) {
-				player.NewRound();
-			}
-			deck = new Deck();
+            foreach (IScopaPlayer player in players) {
+                player.NewRound();
+            }
+			deck = NewDeck;
 			for (int i = 0; i < 7; ++i) {
 				deck.Shuffle();
 			}
@@ -235,41 +215,68 @@ namespace NIESoftware.Scopa {
 			}
 		}
 
-		/// <summary>
-		/// Determine if the game is in progress.  This means that hands have been dealt from the
-		/// deck and or points have been scored.
-		/// </summary>
-		public bool IsInProgress {
-			get { return players.Any<Player>(a => a.Points > 0) && deck.Count < Deck.TOTAL_SIZE; }
-		}
-		
-		/// <summary>
-		/// Determine if the current hand is over.  This means that no players hold cards in their
-		/// hands.
-		/// </summary>
-		public bool IsHandOver {
-			get { return !players.Any<Player>(a => a.Count > 0); }
-		}
-		
-		/// <summary>
-		/// Determine if the current round is completed. This means the deck is exhausted and all
-		/// players hold no cards in their hands.
-		/// </summary>
-		public bool IsRoundOver {
-			get { return deck.IsExhausted && IsHandOver; }
-		}
-		
-		/// <summary>
-		/// Determine if the current game is over (i.e. a player has obtained a winning score and
-		/// has more points than every other player).
-		/// </summary>
-		public bool IsGameOver {
-			// TODO: This condition is not correct it is possible for a player to win a game
-			// say 13 - 11 (where both scores are greater than the required score).
-			get { return players.FindAll(a => a.Points >= winningScore).Count == 1; }
-		}
+        #endregion // Utility Methods
 
-		#region Action Methods
+        #region Action Methods
+
+        public void PopulateActions() {
+            if (!Current.Equals(actions.Player)) {
+                actions.Player = Current;
+                actions.CardActions = new List<CardActions>();
+                foreach (Card c in Current.Hand) {
+                    CardActions cardActions = new CardActions();
+                    cardActions.Card = c;
+                    cardActions.IsThrowable = ValidateThrow(c);
+                    cardActions.PossibleTricks = new List<List<Card>>();
+                    if (!cardActions.IsThrowable) {
+                        List<List<Card>> possibles = ScopaGame.EnumerateAll(table, c);
+                        foreach (List<Card> possible in possibles) {
+                            if (ValidateTrick(c, possible)) {
+                                cardActions.PossibleTricks.Add(possible);
+                            }
+                        }
+                    }
+                    actions.CardActions.Add(cardActions);
+                }
+                actions.CanThrow = actions.CardActions.Any<CardActions>(a => a.IsThrowable);
+                actions.CanTrick = actions.CardActions.Any<CardActions>(a => !a.IsThrowable);
+            }
+        }
+
+        public void TakeAction(IScopaPlayer player, ScopaEventHandler eventHandler) {
+            if (player.IsPly) {
+                PopulateActions();
+                Card selectedCard = player.SelectCard();
+                List<Card> selectedTrick = player.SelectTrick(selectedCard);
+                CardActions actions = this.actions[selectedCard];
+                if (actions.IsThrowable) {
+                    if (selectedTrick.Count == 0) {
+                        if (ThrowCard(selectedCard)) {
+                            eventHandler.CardThrown(selectedCard);
+                        } else {
+                            eventHandler.UnableToThrow(selectedCard);
+                        }
+                    } else {
+                        eventHandler.MustThrowCard(selectedCard);
+                    }
+                } else {
+                    if (selectedTrick.Count > 0) {
+                        bool scopa;
+                        if (TakeTrick(selectedCard, selectedTrick, out scopa)) {
+                            eventHandler.TrickTaken(selectedCard, selectedTrick);
+                        } else {
+                            eventHandler.UnableToTakeTrick(selectedCard, selectedTrick);
+                        }
+                        if (scopa) {
+                            eventHandler.Scopa(selectedCard, selectedTrick);
+                        }
+                    } else {
+                        eventHandler.MustTakeTrick(selectedCard);
+                    }
+                }
+            }
+        }
+
 		/// <summary>
 		/// Determine if the current player can take only one action with the cards they are
 		/// currently holding if so return that action so that it can be taken.
@@ -358,9 +365,11 @@ namespace NIESoftware.Scopa {
 				table.Clear();
 			}
 		}
+
 		#endregion // Action Methods
 
 		#region Validation Methods
+
 		/// <summary>
 		/// Validate the card thrown against the cards on the table to assure that it can not
 		/// take a trick from the cards that are on the table.
@@ -506,69 +515,56 @@ namespace NIESoftware.Scopa {
 			}
 			return list;
 		}
+
 		#endregion // Validation Methods
 
-		/*
-		 * nick ha presa(22): [ Quattro di Denari, Sei di Denari, Re di Denari, Asso di Cop
-		 * pe, Due di Coppe, Tre di Coppe, Quattro di Coppe, Cinque di Coppe, Cavallo di Co
-		 * ppe, Re di Coppe, Asso di Bastone, Due di Bastone, Quattro di Bastone, Cinque di
-		 * Bastone, Sette di Bastone, Re di Bastone, Asso di Spade, Quattro di Spade, Sett
-		 * e di Spade, Fante di Spade, Cavallo di Spade, Re di Spade, ]
-		 * Premiere: 76
-		 * Scopa: 1
-		 * 
-		 * yuki ha presa(18): [ Asso di Denari, Due di Denari, Tre di Denari, Cinque di Den
-		 * ari, Sette di Denari, Fante di Denari, Cavallo di Denari, Sei di Coppe, Sette di
-		 * Coppe, Fante di Coppe, Tre di Bastone, Sei di Bastone, Fante di Bastone, Cavall
-		 * o di Bastone, Due di Spade, Tre di Spade, Cinque di Spade, Sei di Spade, ]
-		 * Premiere: 78
-		 * Scopa: 1
-		 * 
-		 * Computer: Nick 2 (+2)
-		 *			 Yuki 2 (+2)
-		 * Actual Score:
-		 * Nick: Carte, 1 Scopa (+2 punti)
-		 * Yuki: Settebello, Primiera, Denari, 1 Scopa (+4 punti)
-		 * 
-		 */
-		public List<Player> ScoreRound() {
-			// NOTA: I would use Linq for the following segments, but there does not seem to be 
-			// a way to return the referential element only the value when using Max, Min, etc.
-			// which does not help when I need to add a point to the Player with that score not
-			// report the score.
-			List<Player> players = new List<Player>(this.players);
-			foreach (Player player in players) {
+        #region Scoring Methods
+
+		public List<IScopaPlayer> ScoreRound() {
+            List<IScopaPlayer> players = new List<IScopaPlayer>(this.players);
+            foreach (IScopaPlayer player in players) {
 				player.RoundScore = 0;
 			}
 
-			AddPoint(a => a.TrickTracker.CardCount);
-			AddPoint(a => a.TrickTracker.DenariCount);
-			AddPoint(a => a.TrickTracker.PrimieraValue);
+			AddPoint(a => a.CardCount);
+			AddPoint(a => a.DenariCount);
+			AddPoint(a => a.PrimieraValue);
 
 			// Add Sette Bello and Scopas to the score
-			foreach (Player player in players) {
-				player.RoundScore += player.TrickTracker.SetteBello ? 1 : 0;
-				player.RoundScore += player.TrickTracker.ScopaCount;
+			foreach (IScopaPlayer player in players) {
+				player.RoundScore += player.SetteBello ? 1 : 0;
+				player.RoundScore += player.ScopaCount;
 				player.Points += player.RoundScore;
 			}
 
 			// Sort the players by total number of points (descending)
-			players.Sort(delegate(Player a, Player b) {
+            players.Sort(delegate(IScopaPlayer a, IScopaPlayer b) {
 				return -a.Points.CompareTo(b.Points);
 			});
 			return players;
 		}
 
-		private void AddPoint(Func<Player, int> predicate) {
-			int max = players.Max<Player>(a => predicate (a));
-			List<Player> maxList = players.FindAll(delegate(Player p) {
-				return predicate (p) == max;
-			});
-			if (maxList.Count == 1) {
-				maxList[0].RoundScore += 1;
-			}
-		}
+        private void AddPoint(Func<IScopaPlayer, decimal> predicate) {
+            IScopaPlayer player = Utilities.MaximumElement(players, predicate);
+            if (player != null) {
+                player.RoundScore += 1;
+            }
+        }
 
-	}
+        #endregion // Scoring Methods
+
+        #region NewDeck
+
+        static Deck NewDeck {
+#if USE_STACKED
+            get { return new StackedDeck(); }
+#else
+            get { return new Deck(); }
+#endif
+        }
+
+        #endregion
+
+    }
 
 }

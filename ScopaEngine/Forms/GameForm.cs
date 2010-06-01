@@ -15,7 +15,11 @@ namespace NIESoftware.Forms {
 
 	using Scopa;
 
-	partial class GameForm : Form, IScopaUIForm {
+	partial class GameForm : Form {
+
+        private const int COMPUTER_INITIAL_INTERVAL = 2000;
+        // private const int COMPUTER_GOPLY_INTERVAL = 1000;
+        private const int COMPUTER_STEP_INTERVAL = 1500;
 
 		private const string TrickTrackerLabelBase = @"Carte:
 Premiera:
@@ -23,34 +27,50 @@ Denari:
 Scope:";
 
 		private const string PLAYER_A_NAME = "Computer";
-		private const string PLAYER_B_NAME = "Player  ";
+		private const string PLAYER_B_NAME = "Player";
 
-		private ScopaGame game;
+        private ScopaEventHandler eventHandler;
+        private ScopaGame game;
+        private PlaySelection selection;
         private AIScopaPlayer computer;
         private UIScopaPlayer humanPlayer;
-        private Card selectedCard;
-		private List<Card> selectedTrick;
 
 		public GameForm() {
 			InitializeComponent();
+            InitializeEventHandler();
 			NewGame();
 		}
 
-        public Card SelectedCard {
-            get { return selectedCard; }
-        }
-        public List<Card> SelectedTrick {
-            get { return selectedTrick; }
+        private void InitializeEventHandler() {
+            eventHandler = new ScopaEventHandler();
+            eventHandler.MustThrowCard += delegate(Card card) {
+                MessageBox.Show("The " + card + " must be thrown", "Invalid Action", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            };
+            eventHandler.MustTakeTrick += delegate(Card card) {
+                MessageBox.Show("The " + card + " must take a trick", "Invalid Action", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            };
+            eventHandler.UnableToThrow += delegate(Card card) {
+                MessageBox.Show("The " + card + " can not be thrown", "Invalid Action", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            };
+            eventHandler.UnableToTakeTrick += delegate(Card card, List<Card> list) {
+                MessageBox.Show("The " + card + " can not take " + Card.ToString(list), "Invalid Action", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            };
+            eventHandler.CardThrown += delegate(Card card) { };
+            eventHandler.TrickTaken += delegate(Card card, List<Card> list) { };
+            eventHandler.Scopa += delegate(Card card, List<Card> list) {
+                MessageBox.Show("Scopa!!!", "Scopa", MessageBoxButtons.OK);
+            };
         }
 
 		private void NewGame() {
 			game = new ScopaGame();
-			selectedTrick = new List<Card>();
-			game.AddPlayers(new List<String> { PLAYER_A_NAME, PLAYER_B_NAME, });
+            selection = new PlaySelection();
+            computer = new AIScopaPlayer(PLAYER_A_NAME, game);
+            humanPlayer = new UIScopaPlayer(PLAYER_B_NAME, game, selection);
+
+            game.AddPlayers(new List<IScopaPlayer> { computer, humanPlayer, });
 			game.BeginGame();
 			game.DealStartingHand();
-            computer = new AIScopaPlayer (game, game.Players[0]);
-            humanPlayer = new UIScopaPlayer("Player", game, game.Players[1], this);
 
 			playerAName.Text = computer.Name;
 			playerBName.Text = humanPlayer.Name;
@@ -63,7 +83,7 @@ Scope:";
             if (computer.IsPly) {
                 CreateDelayedEvent(delegate(object sender, EventArgs e) {
                     ComputerStep();
-                }, 5000);
+                }, COMPUTER_INITIAL_INTERVAL);
             }
 		}
 
@@ -131,7 +151,6 @@ Scope:";
 #endif
 			ShowCardList(new PictureBox[] { playerBHand0, playerBHand1, playerBHand2, }, humanPlayer.Hand);
             ShowCardList(new PictureBox[] { table0, table1, table2, table3, table4, table5, table6, table7, }, game.Table);
-			selectedTrick = new List<Card>();
 		}
 
 		private void ShowCardList(PictureBox[] pbs, List<Card> cardList) {
@@ -194,11 +213,16 @@ Scope:";
             }
         }
 
-		private void UpdateScores() {
+        private void UpdateScores() {
+            UpdateScores(true);
+        }
+		private void UpdateScores(bool updateTrickTracker) {
 			playerAScore.Text = computer.Points + " (+" + computer.RoundScore + ")";
-			UpdateTrickTracker(playerATrickTracker, playerATrickTrackerCount, computer);
-			playerBScore.Text = humanPlayer.Points + " (+" + humanPlayer.RoundScore + ")";
-			UpdateTrickTracker(playerBTrickTracker, playerBTrickTrackerCount, humanPlayer);
+            playerBScore.Text = humanPlayer.Points + " (+" + humanPlayer.RoundScore + ")";
+            if (updateTrickTracker) {
+                UpdateTrickTracker(playerATrickTracker, playerATrickTrackerCount, computer);
+                UpdateTrickTracker(playerBTrickTracker, playerBTrickTrackerCount, humanPlayer);
+            }
 		}
 
 		private void UpdateTrickTracker(Label trickTracker, Label trickTrackerCount, IScopaPlayer player) {
@@ -210,11 +234,11 @@ Scope:";
 				+ player.ScopaCount;
 		}
 
-        private void HighlightTrick() {
+        private void HighlightTrick(List<Card> cardList) {
             foreach (PictureBox pb in new PictureBox[] { table0, table1, table2, table3, table4, table5, table6, table7, }) {
                 if (pb.Image != null && pb.Image.Tag != null && pb.Image.Tag is Card) {
                     Card card = (Card)pb.Image.Tag;
-                    if (selectedTrick.Contains<Card>(card)) {
+                    if (cardList.Contains<Card>(card)) {
                         SetCardHighlightedImage(pb, card);
                     }
                 }
@@ -247,12 +271,12 @@ Scope:";
 					if (pb.Image.Tag is Card) {
 						Card card = (Card)pb.Image.Tag;
 						Image resource = CardToResource(card);
-						if (!selectedTrick.Contains<Card>(card)) {
+						if (!selection.IsInTrick (card)) {
                             SetCardHighlightedImage(pb, card);
-							selectedTrick.Add(card);
+                            selection.AddToTrick(card);
 						} else {
                             SetCardImage(pb, card);
-							selectedTrick.Remove(card);
+                            selection.RemoveFromTrick(card);
 						}
 					}
 				}
@@ -264,13 +288,21 @@ Scope:";
 			MouseEventArgs eventArgs = (e as MouseEventArgs);
 			if (eventArgs.Button == MouseButtons.Left && !game.IsGameOver) {
                 if (pb.Image != null) {
-                    selectedCard = (Card)pb.Image.Tag;
-                    StepGame();
+                    if (humanPlayer.IsPly) {
+                        selection.SelectedCard = (Card?)pb.Image.Tag;
+                        StepGame(humanPlayer);
+                        if (!humanPlayer.IsPly) {
+                            selection.Clear();
+                        }
 
-                    if (computer.IsPly) {
-                        CreateDelayedEvent(delegate(object _sender, EventArgs _e) {
+                        if (computer.IsPly) {
                             ComputerStep();
-                        }, 3000);
+                            /*
+                            CreateDelayedEvent(delegate(object _sender, EventArgs _e) {
+                                ComputerStep();
+                            }, COMPUTER_GOPLY_INTERVAL);
+                             */
+                        }
                     }
                 }
 			}
@@ -289,57 +321,22 @@ Scope:";
 		#region Game Methods
 
         private void ComputerStep() {
-            selectedCard = computer.SelectCard();
-            selectedTrick = computer.SelectTrick(selectedCard);
-            HighlightTrick();
+            Card selectedCard = computer.SelectCard();
+            List<Card> selectedTrick = computer.SelectTrick(selectedCard);
+            HighlightTrick(selectedTrick);
             RevealCard(selectedCard);
             CreateDelayedEvent(delegate(object sender, EventArgs e) {
-                StepGame();
-            }, 3000);
+                StepGame(computer);
+            }, COMPUTER_STEP_INTERVAL);
         }
 
-		private void StepGame() {
-			if (game.Current.Contains<Card>(selectedCard)) {
-                game.PopulateActions();
-                TakeAction();
-                CompleteAction();
-			}
+		private void StepGame(IScopaPlayer player) {
+            TakeAction(player);
+            CompleteAction();
 		}
 
-        private void TakeAction() {
-            CardActions actions = game.Actions[selectedCard];
-            if (actions.IsThrowable) {
-                if (selectedTrick.Count == 0) {
-                    if (!game.ThrowCard(selectedCard)) {
-                        MessageBox.Show("The " + selectedCard + " can not be thrown", "Invalid Action", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
-                } else {
-                    MessageBox.Show("The " + selectedCard + " must be thrown", "Invalid Action", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-            } else {
-                if (selectedTrick.Count == 0) {
-                    if (actions.PossibleTricks.Count == 1) {
-                        selectedTrick.AddRange(actions.PossibleTricks[0]);
-                        HighlightTrick();
-                    }
-                }
-
-                if (selectedTrick.Count > 0) {
-                    bool scopa;
-                    if (!game.TakeTrick(selectedCard, selectedTrick, out scopa)) {
-                        MessageBox.Show("The " + selectedCard + " can not take " + Card.ToString(selectedTrick), "Invalid Action", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-#if DEBUG_TRICK
-						} else {
-							MessageBox.Show("Took trick " + Card.ToString(selectedList) + " with " + card);
-#endif
-                    }
-                    if (scopa) {
-                        MessageBox.Show("Scopa!!!", "Scopa", MessageBoxButtons.OK);
-                    }
-                } else {
-                    MessageBox.Show("The " + selectedCard + " must take a trick", "Invalid Action", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-            }
+        private void TakeAction(IScopaPlayer player) {
+            game.TakeAction(player, eventHandler);
         }
 
         private void CompleteAction() {
@@ -347,16 +344,7 @@ Scope:";
                 game.TakeLastTrick();
                 UpdateScores();
                 ShowCards();
-
-                if (!game.IsGameOver) {
-                    CreateDelayedEvent(delegate(object sender, EventArgs e) {
-                        CompleteRound();
-                    }, 5000);
-                } else {
-                    List<Player> ranking = game.ScoreRound();
-                    game.NewRound();
-                    MessageBox.Show(ranking[0].Name + " Wins the game!", "Game Over", MessageBoxButtons.OK);
-                }
+                CompleteRound();
             } else {
                 if (game.IsHandOver && !game.IsGameOver) {
                     game.DealHand();
@@ -373,32 +361,49 @@ Scope:";
 #if DEBUG_SCORE
             ShowCompleteRound_DebugMessage ();
 #endif
-
-			List<Player> ranking = game.ScoreRound();
+            List<IScopaPlayer> ranking = game.ScoreRound();
 			game.NewRound();
-			if (!game.IsGameOver) {
-				game.DealStartingHand();
-			}
 
-			if (game.IsHandOver && !game.IsGameOver) {
-				game.DealHand();
-			}
+            if (!game.IsGameOver) {
+                CreateDelayedEvent(delegate(object sender, EventArgs e) {
+                    BeginNextRound();
+                }, 4000);
+            } else {
+                ShowDealerImage();
+                ShowTurnImage();
+                ShowCards();
+                UpdateScores(false);
 
-			ShowDealerImage();
-			ShowTurnImage();
-			ShowCards();
-			UpdateScores();
+                MessageBox.Show(ranking[0].Name + " Wins the game!", "Game Over", MessageBoxButtons.OK);
+            }
+        }
+
+        private void BeginNextRound() {
+            if (!game.IsGameOver) {
+                game.DealStartingHand();
+            }
+            if (game.IsHandOver && !game.IsGameOver) {
+                game.DealHand();
+            }
+
+            ShowDealerImage();
+            ShowTurnImage();
+            ShowCards();
+            UpdateScores();
 
             if (computer.IsPly) {
-                CreateDelayedEvent(delegate(object sender, EventArgs e) {
+                ComputerStep();
+                /*
+                CreateDelayedEvent(delegate(object _sender, EventArgs _e) {
                     ComputerStep();
-                }, 3000);
+                }, COMPUTER_GOPLY_INTERVAL);
+                 */
             }
         }
 
         private void ShowCompleteRound_DebugMessage() {
 			StringBuilder builder = new StringBuilder();
-			foreach (Player player in game.Players) {
+			foreach (PlayerTracker player in game.Players) {
 				builder.Append(player.Name).Append(" ha presa(").Append(player.TrickTracker.CardCount).Append("): ");
 				List<Card> cardsTaken = player.TrickTracker.CardsTaken;
 				cardsTaken.Sort();
