@@ -23,7 +23,7 @@ namespace NIESoftware {
         private List<Card> SelectCardsFromTable(ScopaGame game, GameAction action, Card fromHand) {
             List<Card> fromTable = new List<Card>();
             if (game.Table.Count > 0) {
-                CardActions actions = game.Actions[fromHand];
+                CardActions actions = game.PossibleActions[fromHand];
                 Console.Out.WriteLine(actions.PossibleTricks.Count + " trick(s) are possible with " + fromHand);
                 foreach (List<Card> possibleTrick in actions.PossibleTricks) {
                     Console.Out.WriteLine("Possible Trick: " + Card.ToString(possibleTrick));
@@ -47,7 +47,7 @@ namespace NIESoftware {
 
         public override List<Card> SelectTrick(Card card) {
             game.PopulateActions();
-            CardActions actions = game.Actions[card];
+            CardActions actions = game.PossibleActions[card];
             if (!actions.IsThrowable) {
                 if (actions.PossibleTricks.Count == 1) {
                     return actions.PossibleTricks[0];

@@ -21,7 +21,7 @@ namespace NIESoftware.Scopa {
                 selection = DoTrickSelection(game, player, (Card) player.Hand[0]);
                 return (Card) selection.SelectedCard;
             }
-            List<Card> playable = player.Hand.FindAll(a => !game.Actions[a].IsThrowable);
+            List<Card> playable = player.Hand.FindAll(a => !game.PossibleActions[a].IsThrowable);
             if (playable.Count > 0) {
                 // Always take the Sette Bello
                 if (playable.Contains<Card>(Card.SetteBello)) {
@@ -67,16 +67,22 @@ namespace NIESoftware.Scopa {
             List<Card> trick = new List<Card>(selectedTrick);
             trick.Add(selectedCard);
             TrickTracker tracker = player.GetPossibleScores(trick, scopa);
-            int weight = 0;
-            weight += !player.SetteBello && tracker.SetteBello ? 84 : 0;
-            weight += ((player.PrimieraValue > 78) ? 1 : 2) * (tracker.PrimieraValue - player.PrimieraValue);
-            weight += ((player.DenariCount > 5) ? 1 : 2) * (tracker.DenariCount - player.DenariCount);
-            weight += tracker.CardCount - player.CardCount;
+            int weight = ((!player.SetteBello && tracker.SetteBello) ? 84 : 0)
+                + (scopa ? 84 : 0)
+                + ((player.PrimieraValue > 78) ? 1 : 2) * (tracker.PrimieraValue - player.PrimieraValue)
+                + ((player.DenariCount > 5) ? 1 : 2) * (tracker.DenariCount - player.DenariCount)
+                + (tracker.CardCount - player.CardCount);
+            Console.Out.WriteLine("SetteBello " + tracker.SetteBello + ", Scopa " + scopa);
+            Console.Out.WriteLine("Primiera " + tracker.PrimieraValue + " <- " + player.PrimieraValue);
+            Console.Out.WriteLine("Denari   " + tracker.DenariCount + " <- " + player.DenariCount);
+            Console.Out.WriteLine("Cards    " + tracker.CardCount + " <- " + player.CardCount);
+            Console.Out.WriteLine("Cards Taken " + Card.ToString(tracker.CardsTaken));
+            Console.Out.WriteLine("Trick " + Card.ToString(selectedTrick) + " with " + selectedCard + " := " + weight);
             return weight;
         }
 
         private WeightedSelection DoTrickSelection(ScopaGame game, AIScopaPlayer player, Card selectedCard) {
-            List<List<Card>> possibleTricks = game.Actions[selectedCard].PossibleTricks;
+            List<List<Card>> possibleTricks = game.PossibleActions[selectedCard].PossibleTricks;
             List<Card> bestTrick = null;
             int maxWeight = Int32.MinValue;
             foreach (List<Card> trick in possibleTricks) {

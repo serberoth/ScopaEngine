@@ -15,7 +15,7 @@ namespace NIESoftware.Scopa {
             return player.Hand[0];
         }
         public List<Card> SelectTrick(ScopaGame game, AIScopaPlayer player, Card selectedCard) {
-            List<List<Card>> possibleTricks = game.Actions[selectedCard].PossibleTricks;
+            List<List<Card>> possibleTricks = game.PossibleActions[selectedCard].PossibleTricks;
             return possibleTricks[0];
         }
     }
@@ -33,7 +33,7 @@ namespace NIESoftware.Scopa {
             if (selection.SelectedCard != null && player.IsHolding((Card) selection.SelectedCard)) {
                 return selection.SelectedTrick;
             }
-            List<List<Card>> possibleTricks = game.Actions[selectedCard].PossibleTricks;
+            List<List<Card>> possibleTricks = game.PossibleActions[selectedCard].PossibleTricks;
             return selection.SelectedTrick = possibleTricks[(int)Random.Default.Ranged(possibleTricks.Count)];
         }
     }
@@ -54,7 +54,7 @@ namespace NIESoftware.Scopa {
 
         public override List<Card> SelectTrick(Card card) {
             game.PopulateActions();
-            CardActions actions = game.Actions[card];
+            CardActions actions = game.PossibleActions[card];
             if (!actions.IsThrowable) {
                 if (actions.PossibleTricks != null) {
                     if (actions.PossibleTricks.Count == 1) {

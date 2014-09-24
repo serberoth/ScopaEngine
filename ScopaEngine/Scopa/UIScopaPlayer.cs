@@ -19,19 +19,15 @@ namespace NIESoftware.Scopa {
 
         public override List<Card> SelectTrick(Card card) {
             game.PopulateActions();
-            CardActions actions = game.Actions[card];
+            CardActions actions = game.PossibleActions[card];
+            if (selection.SelectedTrick != null && selection.SelectedTrick.Count > 0) {
+                return selection.SelectedTrick;
+            }
             if (!actions.IsThrowable) {
                 if (actions.PossibleTricks != null) {
                     if (actions.PossibleTricks.Count == 1) {
                         return actions.PossibleTricks[0];
                     }
-                    List<Card> selectedTrick = selection.SelectedTrick;
-                    if (selectedTrick.Count == 0) {
-                        if (actions.PossibleTricks.Count == 1) {
-                            return actions.PossibleTricks[0];
-                        }
-                    }
-                    return selectedTrick;
                 }
             }
             return new List<Card>();

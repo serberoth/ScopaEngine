@@ -1,0 +1,21 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="ScopaEngine/Forms/GameForm.Designer.cs">
+    <Files>
+      <File FileName="ScopaEngine/Forms/GameForm.cs" Line="33" Column="32" />
+      <File FileName="ScopaEngine/ConsoleScopa.cs" Line="230" Column="26" />
+      <File FileName="ScopaEngine/Scopa/ScopaGame.cs" Line="10" Column="39" />
+      <File FileName="ScopaEngine/Scopa/AbstractScopaGame.cs" Line="1" Column="1" />
+      <File FileName="ScopaEngine/Scopa/WeightedSelectorAI.cs" Line="20" Column="42" />
+      <File FileName="ScopaEngine/Scopa/ScopaActions.cs" Line="30" Column="36" />
+      <File FileName="ScopaEngine/Scopa/AIScopaPlayer.cs" Line="39" Column="6" />
+      <File FileName="ScopaEngine/Scopa/MinimaxSelector.cs" Line="237" Column="24" />
+      <File FileName="ScopaEngine/Scopa/Cards.cs" Line="1" Column="1" />
+      <File FileName="ScopaEngine/Forms/GameForm.Designer.cs" Line="403" Column="56" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

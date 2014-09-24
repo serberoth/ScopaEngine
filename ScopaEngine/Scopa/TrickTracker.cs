@@ -105,7 +105,7 @@ namespace NIESoftware.Scopa {
 		}
 
         public TrickTracker GetPossibleScores(List<Card> cards, bool scopa) {
-            TrickTracker tracker = new TrickTracker();
+            TrickTracker tracker = new TrickTracker(this);
             tracker.TakeTrick(cards, scopa);
             return tracker;
         }

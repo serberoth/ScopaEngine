@@ -24,10 +24,12 @@ namespace NIESoftware.Scopa {
         }
 
         public int ThrowableCount {
-            get { return CardActions.Count<CardActions>(a => a.IsThrowable); }
+            // get { return CardActions.Count<CardActions>(a => a.IsThrowable); }
+            get { return CardActions.Count(a => a.IsThrowable); }
         }
         public int TrickableCount {
-            get { return CardActions.Count<CardActions>(a => !a.IsThrowable); }
+            // get { return CardActions.Count<CardActions>(a => !a.IsThrowable); }
+            get { return CardActions.Count(a => !a.IsThrowable); }
         }
 
         public List<CardActions> ThrowableList {

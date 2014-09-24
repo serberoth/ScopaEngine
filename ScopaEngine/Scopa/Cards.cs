@@ -29,8 +29,8 @@ namespace NIESoftware.Scopa {
 	struct Card : IComparable<Card> {
 		public static readonly Card SetteBello = new Card(Suit.Denari, Value.Sette);
 
-		private Suit suit;
-		private Value value;
+		private readonly Suit suit;
+		private readonly Value value;
 
 		public Card(Suit s, Value v) {
 			suit = s;
@@ -46,14 +46,18 @@ namespace NIESoftware.Scopa {
 
 		public override bool Equals(Object obj) {
 			if (obj != null && obj is Card) {
-				Card c = (Card)obj;
-				return suit.Equals(c.suit) && value.Equals(c.value);
+				Card card = (Card)obj;
+                return suit.Equals(card.suit) && value.Equals(card.value);
 			}
 			return false;
 		}
 
 		public override int GetHashCode() {
-			return base.GetHashCode();
+            const int prime = 31;
+            int result = 1;
+            result = prime * result + suit.GetHashCode ();
+            result = prime * result + value.GetHashCode ();
+			return result;
 		}
 
 		public int CompareTo (Card c) {
@@ -93,7 +97,7 @@ namespace NIESoftware.Scopa {
 
 	}
 
-	class Deck : IEnumerable<Card> {
+	class Deck : IEnumerable<Card>, ICloneable {
 		public const int TOTAL_SIZE = 40; // Enum.GetValues (typeof (Suit)).Length * Enum.GetValues (typeof (Value)).Length;
 
 #if DEBUG
@@ -113,6 +117,12 @@ namespace NIESoftware.Scopa {
         protected Deck(List<Card> cards) {
             Debug.Assert(cards.Count == TOTAL_SIZE);
             this.cards = new List<Card> (cards);
+        }
+
+        public object Clone () {
+            Deck deck = new Deck();
+            deck.cards = new List<Card>(cards);
+            return deck;
         }
 
 		public virtual void Shuffle() {
@@ -150,7 +160,7 @@ namespace NIESoftware.Scopa {
             return cards.GetEnumerator();
         }
 
-	}
+    }
 
     class StackedDeck : Deck {
 
@@ -166,10 +176,13 @@ namespace NIESoftware.Scopa {
             new Card (Suit.Coppe, Value.Fante),     // Player B
             new Card (Suit.Coppe, Value.Fante),     // Table 4
 
-            new Card (Suit.Coppe, Value.Fante),
-            new Card (Suit.Coppe, Value.Fante),
-            new Card (Suit.Coppe, Value.Fante),
-            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),     // Player A
+            new Card (Suit.Coppe, Value.Fante),     // Player B
+            new Card (Suit.Coppe, Value.Fante),     // Player A
+            new Card (Suit.Coppe, Value.Fante),     // Player B
+            new Card (Suit.Coppe, Value.Fante),     // Player A
+            new Card (Suit.Coppe, Value.Fante),     // Player B
+
             new Card (Suit.Coppe, Value.Fante),
             new Card (Suit.Coppe, Value.Fante),
             new Card (Suit.Coppe, Value.Fante),
@@ -183,15 +196,14 @@ namespace NIESoftware.Scopa {
             new Card (Suit.Coppe, Value.Fante),
             new Card (Suit.Coppe, Value.Fante),
             new Card (Suit.Coppe, Value.Fante),
-            new Card (Suit.Coppe, Value.Fante),
-            new Card (Suit.Coppe, Value.Fante),
-            new Card (Suit.Coppe, Value.Fante),
-            new Card (Suit.Coppe, Value.Fante),
 
             new Card (Suit.Coppe, Value.Fante),
             new Card (Suit.Coppe, Value.Fante),
             new Card (Suit.Coppe, Value.Fante),
             new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+            new Card (Suit.Coppe, Value.Fante),
+
             new Card (Suit.Coppe, Value.Fante),
             new Card (Suit.Coppe, Value.Fante),
             new Card (Suit.Coppe, Value.Fante),
