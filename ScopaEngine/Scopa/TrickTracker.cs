@@ -96,6 +96,9 @@ namespace NIESoftware.Scopa {
 				List<Card> list = cardsTaken[s];
 				if (list.Count > 0) {
 					list.Sort(CompareToPrimieraScore);
+					if (list.Count > 4) {
+						list = list.GetRange(0, 4);
+					}
 					primieraValue += PrimieraScore[list[list.Count - 1].Value];
 				}
 			}
