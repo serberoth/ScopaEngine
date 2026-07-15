@@ -311,7 +311,6 @@ Scope:";
                         selection.SelectedCard = (Card?)pb.Image.Tag;
                         StepGame(humanPlayer);
                         if (!humanPlayer.IsPly) {
-                            selection.Clear();
                             ComputerStep();
                             /*
                             CreateDelayedEvent(delegate(object _sender, EventArgs _e) {
@@ -373,6 +372,7 @@ Scope:";
 
         private void ComputerStep() {
             if (!humanPlayer.IsPly) {
+                selection.Clear();
                 Card selectedCard = game.Current.SelectCard();
                 RevealCard(selectedCard);
                 HighlightTrick(game.Current.SelectTrick(selectedCard));
